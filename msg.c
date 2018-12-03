@@ -70,7 +70,16 @@ int send_rtrv(int sfd)
 	return 1;
 }
 
-// read_pkt
+// send_num
+void send_num(int sfd, uint64_t num)
+{
+	char msg[RNUM_PKT_LEN] = {0};
+}
+// send_ok
+// send_set
+
+/* HANLE PACKETS */
+
 static packet_s *handle_rtrv_pkt(char *buf, int len)
 {
 	if (len != RTRV_PKT_LEN)
@@ -172,5 +181,3 @@ packet_s *read_pkt(int sfd)
 
 	return pkt;
 }
-// send_num
-// send_set

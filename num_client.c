@@ -69,7 +69,7 @@ void send_num(char *server, uint64_t num)
 
 void recv_num(char *server)
 {
-	uint64_t num;
+	//uint64_t num;
 	int sfd;
 	struct sockaddr_un sock = {0};
 
@@ -79,7 +79,7 @@ void recv_num(char *server)
 	printf("server: %s\n", server);
 	// write msg
 	if (!send_rtrv(sfd)) {
-		fprintf(stderr, "ERROR in sending number %ld\n", num);
+		fprintf(stderr, "ERROR in sending RTRV request\n");
 	}
 	printf("wrote msg\n");
 	// read msg
@@ -144,6 +144,7 @@ int main(int argc, char **argv)
 			break;
 		case OP_RECV:
 			recv_num(server);
+			// set return val
 			break;
 		case OP_NONE:
 			printf("Must select one command\n");
@@ -151,6 +152,7 @@ int main(int argc, char **argv)
 			return 1;
 		case OP_ERR:
 			printf("Only one command allowed\n");
+			__attribute__ ((fallthrough));
 		default:
 			print_usage(argv[0]);
 			return 1;

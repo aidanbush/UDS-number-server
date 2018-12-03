@@ -9,18 +9,35 @@
 #include <stdlib.h>
 
 #include "msg.h"
+#include "buf.h"
 
 #define BACKLOG	5
+
+buf_s *buf;
 
 int stor_num(packet_s *pkt)
 {
 	printf("STOR %ld\n", pkt->num);
+	if (add_buf(buf, pkt->num)) {
+		printf("OK\n");
+		// send ok
+	} else {
+		printf("ERR\n");
+		// send err
+	}
 	return 1;
 }
 
 int rtrv_num(packet_s *pkt)
 {
-	printf("STRV\n");
+	printf("RTRV\n");
+	if (retrieve_buf(buf, &(pkt->num))) {
+		printf("num: %ld\n", pkt->num);
+		// send num
+	} else {
+		printf("ERR\n");
+		// send err
+	}
 	return 1;
 }
 
@@ -103,5 +120,12 @@ int server(char *sock_name)
 int main()
 {
 	// init memory
+	buf = init_buf();
+
 	server("test");
+
+	free_buf(buf);
+	buf = NULL;
+
+	return 1;
 }
