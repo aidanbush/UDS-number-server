@@ -15,12 +15,21 @@ typedef struct packet {
 	uint64_t num;
 } packet_s;
 
-int send_stor(int sfd, uint64_t num);
+void free_pkt(packet_s *pkt);
 
-int send_rtrv(int sfd);
+/* SEND FUNCTIONS */
+int send_stor_pkt(int sfd, uint64_t num);
+
+int send_rtrv_pkt(int sfd);
+
+int send_num_pkt(int sfd, uint64_t num);
+
+int send_ok_pkt(int sfd);
+
+int send_err_pkt(int sfd);
+
+/* READ */
 
 packet_s *read_pkt(int sfd);
-
-void free_pkt(packet_s *pkt);
 
 #endif /* MSG_H */

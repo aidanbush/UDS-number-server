@@ -53,16 +53,23 @@ void send_num(char *server, uint64_t num)
 {
 	int sfd;
 	struct sockaddr_un sock = {0};
+	packet_s *pkt = NULL;
 
 	if (!create_sock(&sfd, &sock, server))
 		return;
 
 	printf("server: %s, num: %ld\n", server, num);
-	if (!send_stor(sfd, num)) {
+	if (!send_stor_pkt(sfd, num)) {
 		fprintf(stderr, "ERROR in sending number %ld\n", num);
 	}
 	printf("wrote msg\n");
-	// read msg
+
+	printf("read msg\n");
+	pkt = read_pkt(sfd);
+	if (pkt != NULL) {
+		printf("got response\n");
+		free_pkt(pkt);
+	}
 
 	close(sfd);
 }
@@ -72,17 +79,24 @@ void recv_num(char *server)
 	//uint64_t num;
 	int sfd;
 	struct sockaddr_un sock = {0};
+	packet_s *pkt = NULL;
 
 	if (!create_sock(&sfd, &sock, server))
 		return;
 
 	printf("server: %s\n", server);
 	// write msg
-	if (!send_rtrv(sfd)) {
+	if (!send_rtrv_pkt(sfd)) {
 		fprintf(stderr, "ERROR in sending RTRV request\n");
 	}
 	printf("wrote msg\n");
 	// read msg
+	printf("read msg\n");
+	pkt = read_pkt(sfd);
+	if (pkt != NULL) {
+		printf("got response\n");
+		free_pkt(pkt);
+	}
 
 	close(sfd);
 }

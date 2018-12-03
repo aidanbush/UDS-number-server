@@ -44,8 +44,10 @@ void free_pkt(packet_s *pkt)
 	free(pkt);
 }
 
+/* SEND PACKETS */
+
 // send_store
-int send_stor(int sfd, uint64_t num)
+int send_stor_pkt(int sfd, uint64_t num)
 {
 	char msg[STOR_PKT_LEN] = {0};
 
@@ -59,7 +61,7 @@ int send_stor(int sfd, uint64_t num)
 }
 
 // send_rtrv
-int send_rtrv(int sfd)
+int send_rtrv_pkt(int sfd)
 {
 	char msg[RTRV_PKT_LEN] = {0};
 	strncpy(msg, RTRV_PKT_STR, RTRV_PKT_STR_LEN);
@@ -71,14 +73,42 @@ int send_rtrv(int sfd)
 }
 
 // send_num
-void send_num(int sfd, uint64_t num)
+int send_num_pkt(int sfd, uint64_t num)
 {
 	char msg[RNUM_PKT_LEN] = {0};
-}
-// send_ok
-// send_set
+	*((uint64_t *)(msg)) = num;
 
-/* HANLE PACKETS */
+	// send packet
+	if (write(sfd, msg, RNUM_PKT_LEN) != RNUM_PKT_LEN)
+		return 0;
+	return 1;
+}
+
+// send_ok
+int send_ok_pkt(int sfd)
+{
+	char msg[OK_PKT_LEN] = {0};
+	strncpy(msg, OK_PKT_STR, OK_PKT_STR_LEN);
+
+	// send packet
+	if (write(sfd, msg, OK_PKT_LEN) != OK_PKT_LEN)
+		return 0;
+	return 1;
+}
+
+// send err
+int send_err_pkt(int sfd)
+{
+	char msg[ERR_PKT_LEN] = {0};
+	strncpy(msg, ERR_PKT_STR, ERR_PKT_STR_LEN);
+
+	// send packet
+	if (write(sfd, msg, ERR_PKT_LEN) != ERR_PKT_LEN)
+		return 0;
+	return 1;
+}
+
+/* HANDLE PACKETS */
 
 static packet_s *handle_rtrv_pkt(char *buf, int len)
 {

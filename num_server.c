@@ -15,27 +15,39 @@
 
 buf_s *buf;
 
-int stor_num(packet_s *pkt)
+int stor_num(int sfd, packet_s *pkt)
 {
 	printf("STOR %ld\n", pkt->num);
 	if (add_buf(buf, pkt->num)) {
 		printf("OK\n");
+		if (!send_ok_pkt(sfd)) {
+			fprintf(stderr, "error in send OK\n");
+		}
 		// send ok
 	} else {
 		printf("ERR\n");
+		if (!send_err_pkt(sfd)) {
+			fprintf(stderr, "error in send ERR\n");
+		}
 		// send err
 	}
 	return 1;
 }
 
-int rtrv_num(packet_s *pkt)
+int rtrv_num(int sfd, packet_s *pkt)
 {
 	printf("RTRV\n");
 	if (retrieve_buf(buf, &(pkt->num))) {
 		printf("num: %ld\n", pkt->num);
+		if (!send_num_pkt(sfd, pkt->num)) {
+			fprintf(stderr, "error in send ERR\n");
+		}
 		// send num
 	} else {
 		printf("ERR\n");
+		if (!send_err_pkt(sfd)) {
+			fprintf(stderr, "error in send ERR\n");
+		}
 		// send err
 	}
 	return 1;
@@ -55,10 +67,10 @@ void handle_req(int cfd)
 
 	switch (pkt->type) {
 		case PKT_OP_STOR:
-			stor_num(pkt);
+			stor_num(cfd, pkt);
 			break;
 		case PKT_OP_RTRV:
-			rtrv_num(pkt);
+			rtrv_num(cfd, pkt);
 			break;
 		default:
 			//TODO handle error
