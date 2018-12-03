@@ -31,6 +31,10 @@ void handle_req(int cfd)
 	printf("handle req\n");
 	// read req
 	pkt = read_pkt(cfd);
+	if (pkt == NULL) {
+		fprintf(stderr, "read_pkt error\n");
+		return;
+	}
 
 	switch (pkt->type) {
 		case PKT_OP_STOR:

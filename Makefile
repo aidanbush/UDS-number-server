@@ -16,7 +16,9 @@ num_server: num_server.o msg.o
 
 num_server.o: num_server.c msg.h
 
-num_client: num_client.c
+num_client: num_client.o msg.o
+
+num_client.o: num_client.c msg.h
 
 msg.o: msg.c msg.h
 

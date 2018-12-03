@@ -16,6 +16,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "msg.h"
+
 typedef enum {
 	OP_NONE = 0,
 	OP_ERR,
@@ -25,9 +27,6 @@ typedef enum {
 
 int create_sock(int *sfd, struct sockaddr_un *sock, char *server_name)
 {
-	int rd;
-	char buf[100];
-
 	if (strlen(server_name) >= sizeof(sock->sun_path)) {
 		fprintf(stderr, "server name to long\n");
 		return 0;
@@ -59,8 +58,9 @@ void send_num(char *server, uint64_t num)
 		return;
 
 	printf("server: %s, num: %ld\n", server, num);
-	// write msg
-	write(sfd, "STORAAAAAAAA", 13);
+	if (!send_stor(sfd, num)) {
+		fprintf(stderr, "ERROR in sending number %ld\n", num);
+	}
 	printf("wrote msg\n");
 	// read msg
 
@@ -78,6 +78,10 @@ void recv_num(char *server)
 
 	printf("server: %s\n", server);
 	// write msg
+	if (!send_rtrv(sfd)) {
+		fprintf(stderr, "ERROR in sending number %ld\n", num);
+	}
+	printf("wrote msg\n");
 	// read msg
 
 	close(sfd);
