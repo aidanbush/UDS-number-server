@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <pthread.h>
 
 #include "msg.h"
 #include "buf.h"
@@ -23,13 +24,11 @@ int stor_num(int sfd, packet_s *pkt)
 		if (!send_ok_pkt(sfd)) {
 			fprintf(stderr, "error in send OK\n");
 		}
-		// send ok
 	} else {
 		printf("ERR\n");
 		if (!send_err_pkt(sfd)) {
 			fprintf(stderr, "error in send ERR\n");
 		}
-		// send err
 	}
 	return 1;
 }
@@ -42,19 +41,18 @@ int rtrv_num(int sfd, packet_s *pkt)
 		if (!send_num_pkt(sfd, pkt->num)) {
 			fprintf(stderr, "error in send ERR\n");
 		}
-		// send num
 	} else {
 		printf("ERR\n");
 		if (!send_err_pkt(sfd)) {
 			fprintf(stderr, "error in send ERR\n");
 		}
-		// send err
 	}
 	return 1;
 }
 
-void handle_req(int cfd)
+void *handle_req(void *fd)
 {
+	int cfd = *((int *)(fd));
 	packet_s *pkt;
 
 	printf("handle req\n");
@@ -62,7 +60,7 @@ void handle_req(int cfd)
 	pkt = read_pkt(cfd);
 	if (pkt == NULL) {
 		fprintf(stderr, "read_pkt error\n");
-		return;
+		goto handle_req_return;
 	}
 
 	switch (pkt->type) {
@@ -79,7 +77,31 @@ void handle_req(int cfd)
 
 	free_pkt(pkt);
 
+handle_req_return:
+	free(fd);
 	close(cfd);
+	return NULL;
+}
+
+int create_req_thread(int cfd) {
+	int *cfd_ptr = malloc(sizeof(int));
+	if (cfd_ptr == NULL) {
+		perror("malloc");
+		return 0;
+	}
+
+	*cfd_ptr = cfd;
+
+	pthread_t p;
+	if (pthread_create(&p, NULL, handle_req, (void *)cfd_ptr) != 0) {
+		perror("pthread_create");
+		return 0;
+	}
+	printf("pre join\n");
+	pthread_join(p, NULL);
+	printf("post join\n");
+
+	return 1;
 }
 
 int server(char *sock_name)
@@ -121,7 +143,7 @@ int server(char *sock_name)
 	// loop on accept
 	while ((cfd = accept(sfd, (struct sockaddr *)&sock, &slen)) != -1) {
 		printf("accept\n");
-		handle_req(cfd);
+		create_req_thread(cfd);
 	}
 
 	perror("accept");

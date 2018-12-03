@@ -7,6 +7,7 @@
 SHELL=/bin/bash
 CC=gcc
 CFLAGS= -Wall -std=c99 -Wextra -g -pedantic -D_POSIX_C_SOURCE=2
+LDFLAGS= -lpthread
 
 .PHONY: all test
 
