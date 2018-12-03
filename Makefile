@@ -12,9 +12,13 @@ CFLAGS= -Wall -std=c99 -Wextra -g -pedantic -D_POSIX_C_SOURCE=2
 
 all: num_server num_client
 
-num_server: num_server.c
+num_server: num_server.o msg.o
+
+num_server.o: num_server.c msg.h
 
 num_client: num_client.c
 
+msg.o: msg.c msg.h
+
 clean:
-	$(RM) num_server *.o
+	$(RM) num_server num_client *.o

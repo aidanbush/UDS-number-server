@@ -23,42 +23,65 @@ typedef enum {
 	OP_RECV,
 } operation;
 
-void send_num(char *server, uint64_t num)
+int create_sock(int *sfd, struct sockaddr_un *sock, char *server_name)
 {
-	int sfd, rd;
-	struct sockaddr_un sock = {0};
+	int rd;
 	char buf[100];
 
-	if (strlen(server) >= sizeof(sock.sun_path)) {
-		return;
+	if (strlen(server_name) >= sizeof(sock->sun_path)) {
+		fprintf(stderr, "server name to long\n");
+		return 0;
 	}
 
-	sfd = socket(AF_UNIX, SOCK_STREAM, 0);
-	if (sfd == -1) {
+	*sfd = socket(AF_UNIX, SOCK_STREAM, 0);
+	if (*sfd == -1) {
 		perror("socket");
-		return;
+		return 0;
 	}
-	sock.sun_family = AF_UNIX;
+	sock->sun_family = AF_UNIX;
 
-	strcpy(sock.sun_path, server);
+	strcpy(sock->sun_path, server_name);
 
-	if (connect(sfd, (struct sockaddr*)&sock, sizeof(sock)) == -1) {
+	if (connect(*sfd, (struct sockaddr*)sock, sizeof(*sock)) == -1) {
 		perror("connect");
-		return;
+		return 0;
 	}
+
+	return 1;
+}
+
+void send_num(char *server, uint64_t num)
+{
+	int sfd;
+	struct sockaddr_un sock = {0};
+
+	if (!create_sock(&sfd, &sock, server))
+		return;
 
 	printf("server: %s, num: %ld\n", server, num);
 	// write msg
+	write(sfd, "STORAAAAAAAA", 13);
+	printf("wrote msg\n");
 	// read msg
 
 	close(sfd);
 }
 
-/*
 void recv_num(char *server)
 {
+	uint64_t num;
+	int sfd;
+	struct sockaddr_un sock = {0};
+
+	if (!create_sock(&sfd, &sock, server))
+		return;
+
+	printf("server: %s\n", server);
+	// write msg
+	// read msg
+
+	close(sfd);
 }
-*/
 
 void print_usage(char *p_name)
 {
@@ -114,10 +137,9 @@ int main(int argc, char **argv)
 	switch (op) {
 		case OP_STOR:
 			send_num(server, num);
-			// send_num
 			break;
 		case OP_RECV:
-			// recv num
+			recv_num(server);
 			break;
 		case OP_NONE:
 			printf("Must select one command\n");

@@ -6,8 +6,48 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <stdlib.h>
+
+#include "msg.h"
 
 #define BACKLOG	5
+
+int stor_num(packet_s *pkt)
+{
+	printf("STOR %ld\n", pkt->num);
+	return 1;
+}
+
+int rtrv_num(packet_s *pkt)
+{
+	printf("STRV\n");
+	return 1;
+}
+
+void handle_req(int cfd)
+{
+	packet_s *pkt;
+
+	printf("handle req\n");
+	// read req
+	pkt = read_pkt(cfd);
+
+	switch (pkt->type) {
+		case PKT_OP_STOR:
+			stor_num(pkt);
+			break;
+		case PKT_OP_RTRV:
+			rtrv_num(pkt);
+			break;
+		default:
+			//TODO handle error
+			break;
+	}
+
+	free_pkt(pkt);
+
+	close(cfd);
+}
 
 int server(char *sock_name)
 {
@@ -48,11 +88,7 @@ int server(char *sock_name)
 	// loop on accept
 	while ((cfd = accept(sfd, (struct sockaddr *)&sock, &slen)) != -1) {
 		printf("accept\n");
-		close(cfd);
-		//save stuff into struct
-		//determine op code
-		//write to read
-		//send packet back
+		handle_req(cfd);
 	}
 
 	perror("accept");
