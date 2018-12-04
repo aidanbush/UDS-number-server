@@ -18,6 +18,8 @@
 
 #include "msg.h"
 
+int verbose;
+
 typedef enum {
 	OP_NONE = 0,
 	OP_ERR,
@@ -49,56 +51,83 @@ int create_sock(int *sfd, struct sockaddr_un *sock, char *server_name)
 	return 1;
 }
 
-void send_num(char *server, uint64_t num)
+int send_num(char *server, uint64_t num)
 {
 	int sfd;
+	int ret_val = 0;
 	struct sockaddr_un sock = {0};
 	packet_s *pkt = NULL;
 
-	if (!create_sock(&sfd, &sock, server))
-		return;
+	if (verbose)
+		printf("storing number %ld", num);
 
-	printf("server: %s, num: %ld\n", server, num);
+	if (!create_sock(&sfd, &sock, server))
+		return ret_val;
+
 	if (!send_stor_pkt(sfd, num)) {
 		fprintf(stderr, "ERROR in sending number %ld\n", num);
+		ret_val = 0;
+		goto send_num_return;
 	}
-	printf("wrote msg\n");
 
-	printf("read msg\n");
 	pkt = read_pkt(sfd);
-	if (pkt != NULL) {
-		printf("got response\n");
-		free_pkt(pkt);
+	if (pkt == NULL) {
+		fprintf(stderr, "ERROR in reading packet\n");
+		ret_val = 0;
+		goto send_num_return;
 	}
 
+	if (pkt->type == PKT_OP_OK) {
+		ret_val = 1;
+	} else {
+		fprintf(stderr, "number not set\n");
+		ret_val = 0;
+	}
+
+	free_pkt(pkt);
+
+send_num_return:
 	close(sfd);
+	return ret_val;
 }
 
-void recv_num(char *server)
+int recv_num(char *server, uint64_t *num)
 {
-	//uint64_t num;
 	int sfd;
+	int ret_val = 0;
 	struct sockaddr_un sock = {0};
 	packet_s *pkt = NULL;
 
 	if (!create_sock(&sfd, &sock, server))
-		return;
+		return ret_val;
 
-	printf("server: %s\n", server);
-	// write msg
 	if (!send_rtrv_pkt(sfd)) {
 		fprintf(stderr, "ERROR in sending RTRV request\n");
-	}
-	printf("wrote msg\n");
-	// read msg
-	printf("read msg\n");
-	pkt = read_pkt(sfd);
-	if (pkt != NULL) {
-		printf("got response\n");
-		free_pkt(pkt);
+		ret_val = 0;
+		goto recv_num_return;
 	}
 
+	pkt = read_pkt(sfd);
+	if (pkt == NULL) {
+		fprintf(stderr, "ERROR in reading packet\n");
+		ret_val = 0;
+		goto recv_num_return;
+	}
+
+	if (pkt->type == PKT_OP_RNUM) {
+		*num = pkt->num;
+		printf("RNUM %ld\n", *num);
+		ret_val = 1;
+	} else {
+		printf("ERR\n");
+		ret_val = 0;
+	}
+
+	free_pkt(pkt);
+
+recv_num_return:
 	close(sfd);
+	return ret_val;
 }
 
 void print_usage(char *p_name)
@@ -108,17 +137,19 @@ void print_usage(char *p_name)
 		"Options:\n"
 		"    -h display usage message\n"
 		"    -s send number\n"
-		"    -r receive number\n", basename(p_name));
+		"    -r receive number\n"
+		"    -v enable verbose output\n", basename(p_name));
 }
 
 int main(int argc, char **argv)
 {
 	int c;
+	int ret_val;
 	uint64_t num;
 	char *server;
 	operation op = OP_NONE;
 
-	while ((c = getopt(argc, argv, "s:rh")) != -1) {
+	while ((c = getopt(argc, argv, "s:rhv")) != -1) {
 		switch (c) {
 		case 's':
 			num = atoll(optarg);
@@ -133,6 +164,9 @@ int main(int argc, char **argv)
 				op = OP_ERR;
 			else
 				op = OP_RECV;
+			break;
+		case 'v':
+			verbose = 1;
 			break;
 		case 'h':
 			print_usage(argv[0]);
@@ -157,15 +191,17 @@ int main(int argc, char **argv)
 			send_num(server, num);
 			break;
 		case OP_RECV:
-			recv_num(server);
-			// set return val
+			if (recv_num(server, &num)) {
+				ret_val = num;
+			}
 			break;
 		case OP_NONE:
-			printf("Must select one command\n");
+			printf("You must select one command\n");
 			print_usage(argv[0]);
 			return 1;
 		case OP_ERR:
 			printf("Only one command allowed\n");
+			// want fallthrough
 			__attribute__ ((fallthrough));
 		default:
 			print_usage(argv[0]);

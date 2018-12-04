@@ -97,9 +97,7 @@ int create_req_thread(int cfd) {
 		perror("pthread_create");
 		return 0;
 	}
-	printf("pre join\n");
-	pthread_join(p, NULL);
-	printf("post join\n");
+	pthread_detach(p);
 
 	return 1;
 }

@@ -175,7 +175,6 @@ static packet_s *internal_err_pkt()
 packet_s *read_pkt(int sfd)
 {
 	int rd;
-	// TODO make sure have room and has null terminator
 	int len = MAX_PKT_LEN;
 	char buf[MAX_PKT_LEN] = {0};
 	packet_s *pkt = NULL;
