@@ -18,6 +18,7 @@
 buf_s *buf;
 
 volatile sig_atomic_t exit_server;
+volatile sig_atomic_t print_buffer;
 
 // sigint handler, sets server to exit
 void sigint_handler(int par)
@@ -27,8 +28,7 @@ void sigint_handler(int par)
 
 void sighup_handler(int par)
 {
-	printf("print buf\n");
-	print_buf(buf);
+	print_buffer = 1;
 }
 
 int create_sigint_handler()
@@ -151,6 +151,14 @@ int create_req_thread(int cfd) {
 	return 1;
 }
 
+void check_print_buffer()
+{
+	if (print_buffer) {
+		print_buffer = 0;
+		print_buf(buf);
+	}
+}
+
 int server(char *sock_name)
 {
 	int sfd, cfd;
@@ -191,7 +199,9 @@ int server(char *sock_name)
 	while (!exit_server) {
 		cfd = accept(sfd, (struct sockaddr *)&sock, &slen);
 		if (cfd == -1) {
-			if (errno != EINTR) {
+			if (errno == EINTR) {
+				check_print_buffer();
+			} else {
 				exit_server = 1;
 				perror("accept");
 			}
@@ -199,6 +209,7 @@ int server(char *sock_name)
 		}
 
 		create_req_thread(cfd);
+		check_print_buffer();
 	}
 
 	close(sfd);

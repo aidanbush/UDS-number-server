@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdio.h>
 
 #include "msg.h"
 
@@ -12,18 +11,20 @@
 #define ERR_PKT_STR		"ERR"
 
 // check if account for null terminator
-#define RTRV_PKT_STR_LEN	(sizeof(RTRV_PKT_STR) - 1)
-#define OK_PKT_STR_LEN		(sizeof(OK_PKT_STR) - 1)
-#define STOR_PKT_STR_LEN	(sizeof(STOR_PKT_STR) - 1)
-#define ERR_PKT_STR_LEN		(sizeof(ERR_PKT_STR) - 1)
+#define RTRV_PKT_STR_LEN	(sizeof(RTRV_PKT_STR))
+#define OK_PKT_STR_LEN		(sizeof(OK_PKT_STR))
+#define STOR_PKT_STR_LEN	(sizeof(STOR_PKT_STR))
+#define ERR_PKT_STR_LEN		(sizeof(ERR_PKT_STR))
 
 #define PKT_NUM_LEN		8
 
-#define STOR_PKT_LEN		(STOR_PKT_STR_LEN + PKT_NUM_LEN + 1)
-#define RTRV_PKT_LEN		(RTRV_PKT_STR_LEN + 1)
-#define OK_PKT_LEN		(OK_PKT_STR_LEN + 1)
-#define RNUM_PKT_LEN		(PKT_NUM_LEN + 1)
-#define ERR_PKT_LEN		(ERR_PKT_STR_LEN + 1)
+#define STOR_PKT_LEN		(STOR_PKT_STR_LEN + PKT_NUM_LEN)
+#define RTRV_PKT_LEN		(RTRV_PKT_STR_LEN)
+#define OK_PKT_LEN		(OK_PKT_STR_LEN)
+#define RNUM_PKT_LEN		(PKT_NUM_LEN)
+#define ERR_PKT_LEN		(ERR_PKT_STR_LEN)
+
+#define STOR_PKT_NUM_START	(STOR_PKT_STR_LEN - 1)
 
 #define MAX_PKT_LEN		(STOR_PKT_LEN)
 
@@ -51,8 +52,8 @@ int send_stor_pkt(int sfd, int64_t num)
 {
 	char msg[STOR_PKT_LEN] = {0};
 
-	strncpy(msg, STOR_PKT_STR, STOR_PKT_STR_LEN);
-	*((int64_t *)(msg + STOR_PKT_STR_LEN)) = num;
+	strcpy(msg, STOR_PKT_STR);
+	*((int64_t *)(msg + STOR_PKT_NUM_START)) = num;
 
 	// send packet
 	if (write(sfd, msg, STOR_PKT_LEN) != STOR_PKT_LEN)
@@ -64,7 +65,7 @@ int send_stor_pkt(int sfd, int64_t num)
 int send_rtrv_pkt(int sfd)
 {
 	char msg[RTRV_PKT_LEN] = {0};
-	strncpy(msg, RTRV_PKT_STR, RTRV_PKT_STR_LEN);
+	strcpy(msg, RTRV_PKT_STR);
 
 	// send packet
 	if (write(sfd, msg, RTRV_PKT_LEN) != RTRV_PKT_LEN)
@@ -88,7 +89,7 @@ int send_num_pkt(int sfd, int64_t num)
 int send_ok_pkt(int sfd)
 {
 	char msg[OK_PKT_LEN] = {0};
-	strncpy(msg, OK_PKT_STR, OK_PKT_STR_LEN);
+	strcpy(msg, OK_PKT_STR);
 
 	// send packet
 	if (write(sfd, msg, OK_PKT_LEN) != OK_PKT_LEN)
@@ -100,7 +101,7 @@ int send_ok_pkt(int sfd)
 int send_err_pkt(int sfd)
 {
 	char msg[ERR_PKT_LEN] = {0};
-	strncpy(msg, ERR_PKT_STR, ERR_PKT_STR_LEN);
+	strcpy(msg, ERR_PKT_STR);
 
 	// send packet
 	if (write(sfd, msg, ERR_PKT_LEN) != ERR_PKT_LEN)
@@ -140,8 +141,8 @@ static packet_s *handle_stor_pkt(char *buf, int len)
 		return NULL;
 	}
 
-	if (strncmp(buf, STOR_PKT_STR, STOR_PKT_STR_LEN) == 0) {
-		return init_pkt(PKT_OP_STOR, *((int64_t*)(buf + STOR_PKT_STR_LEN)));
+	if (strncmp(buf, STOR_PKT_STR, STOR_PKT_STR_LEN - 1) == 0) {
+		return init_pkt(PKT_OP_STOR, *((int64_t*)(buf + STOR_PKT_NUM_START)));
 	}
 
 	return NULL;
@@ -152,7 +153,7 @@ static packet_s *handle_rnum_pkt(char *buf, int len)
 	if (len != RNUM_PKT_LEN)
 		return NULL;
 
-	return init_pkt(PKT_OP_RNUM, (int64_t)(buf));
+	return init_pkt(PKT_OP_RNUM, *((int64_t*)(buf)));
 }
 
 static packet_s *handle_err_pkt(char *buf, int len)

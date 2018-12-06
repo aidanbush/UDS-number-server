@@ -117,6 +117,7 @@ int recv_num(char *server, int64_t *num)
 
 	if (pkt->type == PKT_OP_RNUM) {
 		*num = pkt->num;
+		printf("%ld\n", pkt->num);
 		if (verbose)
 			printf("retrieved %ld\n", *num);
 		ret_val = 1;
@@ -146,7 +147,7 @@ void print_usage(char *p_name)
 int main(int argc, char **argv)
 {
 	int c;
-	int ret_val;
+	int ret_val = 0;
 	int64_t num;
 	char *server;
 	operation op = OP_NONE;
