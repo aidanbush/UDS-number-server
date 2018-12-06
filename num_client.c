@@ -59,7 +59,7 @@ int send_num(char *server, int64_t num)
 	packet_s *pkt = NULL;
 
 	if (verbose)
-		printf("storing %ld", num);
+		printf("storing %ld\n", num);
 
 	if (!create_sock(&sfd, &sock, server))
 		return ret_val;
@@ -117,7 +117,6 @@ int recv_num(char *server, int64_t *num)
 
 	if (pkt->type == PKT_OP_RNUM) {
 		*num = pkt->num;
-		printf("%ld\n", pkt->num);
 		if (verbose)
 			printf("retrieved %ld\n", *num);
 		ret_val = 1;

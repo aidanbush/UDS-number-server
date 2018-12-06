@@ -18,11 +18,11 @@
 
 #define PKT_NUM_LEN		8
 
-#define STOR_PKT_LEN		(STOR_PKT_STR_LEN + PKT_NUM_LEN)
-#define RTRV_PKT_LEN		(RTRV_PKT_STR_LEN)
-#define OK_PKT_LEN		(OK_PKT_STR_LEN)
-#define RNUM_PKT_LEN		(PKT_NUM_LEN)
-#define ERR_PKT_LEN		(ERR_PKT_STR_LEN)
+#define STOR_PKT_LEN		(STOR_PKT_STR_LEN + PKT_NUM_LEN - 1)
+#define RTRV_PKT_LEN		(RTRV_PKT_STR_LEN - 1)
+#define OK_PKT_LEN		(OK_PKT_STR_LEN - 1)
+#define RNUM_PKT_LEN		(PKT_NUM_LEN - 1)
+#define ERR_PKT_LEN		(ERR_PKT_STR_LEN - 1)
 
 #define STOR_PKT_NUM_START	(STOR_PKT_STR_LEN - 1)
 
@@ -50,7 +50,7 @@ void free_pkt(packet_s *pkt)
 // send_store
 int send_stor_pkt(int sfd, int64_t num)
 {
-	char msg[STOR_PKT_LEN] = {0};
+	char msg[STOR_PKT_LEN + 1] = {0};
 
 	strcpy(msg, STOR_PKT_STR);
 	*((int64_t *)(msg + STOR_PKT_NUM_START)) = num;
@@ -64,7 +64,7 @@ int send_stor_pkt(int sfd, int64_t num)
 // send_rtrv
 int send_rtrv_pkt(int sfd)
 {
-	char msg[RTRV_PKT_LEN] = {0};
+	char msg[RTRV_PKT_LEN + 1] = {0};
 	strcpy(msg, RTRV_PKT_STR);
 
 	// send packet
@@ -76,7 +76,7 @@ int send_rtrv_pkt(int sfd)
 // send_num
 int send_num_pkt(int sfd, int64_t num)
 {
-	char msg[RNUM_PKT_LEN] = {0};
+	char msg[RNUM_PKT_LEN + 1] = {0};
 	*((int64_t *)(msg)) = num;
 
 	// send packet
@@ -88,7 +88,7 @@ int send_num_pkt(int sfd, int64_t num)
 // send_ok
 int send_ok_pkt(int sfd)
 {
-	char msg[OK_PKT_LEN] = {0};
+	char msg[OK_PKT_LEN + 1] = {0};
 	strcpy(msg, OK_PKT_STR);
 
 	// send packet
@@ -100,7 +100,7 @@ int send_ok_pkt(int sfd)
 // send err
 int send_err_pkt(int sfd)
 {
-	char msg[ERR_PKT_LEN] = {0};
+	char msg[ERR_PKT_LEN + 1] = {0};
 	strcpy(msg, ERR_PKT_STR);
 
 	// send packet
