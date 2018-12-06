@@ -27,7 +27,7 @@
 
 #define MAX_PKT_LEN		(STOR_PKT_LEN)
 
-static packet_s *init_pkt(pkt_type type, uint64_t num)
+static packet_s *init_pkt(pkt_type type, int64_t num)
 {
 	packet_s *pkt = malloc(sizeof(packet_s));
 	if (pkt == NULL)
@@ -47,12 +47,12 @@ void free_pkt(packet_s *pkt)
 /* SEND PACKETS */
 
 // send_store
-int send_stor_pkt(int sfd, uint64_t num)
+int send_stor_pkt(int sfd, int64_t num)
 {
 	char msg[STOR_PKT_LEN] = {0};
 
 	strncpy(msg, STOR_PKT_STR, STOR_PKT_STR_LEN);
-	*((uint64_t *)(msg + STOR_PKT_STR_LEN)) = num;
+	*((int64_t *)(msg + STOR_PKT_STR_LEN)) = num;
 
 	// send packet
 	if (write(sfd, msg, STOR_PKT_LEN) != STOR_PKT_LEN)
@@ -73,10 +73,10 @@ int send_rtrv_pkt(int sfd)
 }
 
 // send_num
-int send_num_pkt(int sfd, uint64_t num)
+int send_num_pkt(int sfd, int64_t num)
 {
 	char msg[RNUM_PKT_LEN] = {0};
-	*((uint64_t *)(msg)) = num;
+	*((int64_t *)(msg)) = num;
 
 	// send packet
 	if (write(sfd, msg, RNUM_PKT_LEN) != RNUM_PKT_LEN)
@@ -137,12 +137,11 @@ static packet_s *handle_ok_pkt(char *buf, int len)
 static packet_s *handle_stor_pkt(char *buf, int len)
 {
 	if (len != STOR_PKT_LEN) {
-		printf("len != STOR_PKT_LEN\n");
 		return NULL;
 	}
 
 	if (strncmp(buf, STOR_PKT_STR, STOR_PKT_STR_LEN) == 0) {
-		return init_pkt(PKT_OP_STOR, *((uint64_t*)(buf + STOR_PKT_STR_LEN)));
+		return init_pkt(PKT_OP_STOR, *((int64_t*)(buf + STOR_PKT_STR_LEN)));
 	}
 
 	return NULL;
@@ -153,7 +152,7 @@ static packet_s *handle_rnum_pkt(char *buf, int len)
 	if (len != RNUM_PKT_LEN)
 		return NULL;
 
-	return init_pkt(PKT_OP_RNUM, (uint64_t)(buf));
+	return init_pkt(PKT_OP_RNUM, (int64_t)(buf));
 }
 
 static packet_s *handle_err_pkt(char *buf, int len)
@@ -181,11 +180,6 @@ packet_s *read_pkt(int sfd)
 
 	rd = read(sfd, buf, len);
 
-	for (int i = 0; i < rd; i++)
-		printf("%x", buf[i]);
-	printf("\n");
-
-
 	switch (rd) {
 		case RTRV_PKT_LEN:
 			pkt = handle_rtrv_pkt(buf, rd);
@@ -194,7 +188,6 @@ packet_s *read_pkt(int sfd)
 			pkt = handle_ok_pkt(buf, rd);
 			break;
 		case STOR_PKT_LEN:
-			printf("STOR\n");
 			pkt = handle_stor_pkt(buf, rd);
 			break;
 		case RNUM_PKT_LEN:

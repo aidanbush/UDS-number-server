@@ -51,7 +51,7 @@ int create_sock(int *sfd, struct sockaddr_un *sock, char *server_name)
 	return 1;
 }
 
-int send_num(char *server, uint64_t num)
+int send_num(char *server, int64_t num)
 {
 	int sfd;
 	int ret_val = 0;
@@ -59,7 +59,7 @@ int send_num(char *server, uint64_t num)
 	packet_s *pkt = NULL;
 
 	if (verbose)
-		printf("storing number %ld", num);
+		printf("storing %ld", num);
 
 	if (!create_sock(&sfd, &sock, server))
 		return ret_val;
@@ -80,7 +80,8 @@ int send_num(char *server, uint64_t num)
 	if (pkt->type == PKT_OP_OK) {
 		ret_val = 1;
 	} else {
-		fprintf(stderr, "number not set\n");
+		if (verbose)
+			fprintf(stderr, "number not set\n");
 		ret_val = 0;
 	}
 
@@ -91,7 +92,7 @@ send_num_return:
 	return ret_val;
 }
 
-int recv_num(char *server, uint64_t *num)
+int recv_num(char *server, int64_t *num)
 {
 	int sfd;
 	int ret_val = 0;
@@ -116,10 +117,11 @@ int recv_num(char *server, uint64_t *num)
 
 	if (pkt->type == PKT_OP_RNUM) {
 		*num = pkt->num;
-		printf("RNUM %ld\n", *num);
+		if (verbose)
+			printf("retrieved %ld\n", *num);
 		ret_val = 1;
 	} else {
-		printf("ERR\n");
+		fprintf(stderr, "recieved ERR\n");
 		ret_val = 0;
 	}
 
@@ -145,7 +147,7 @@ int main(int argc, char **argv)
 {
 	int c;
 	int ret_val;
-	uint64_t num;
+	int64_t num;
 	char *server;
 	operation op = OP_NONE;
 
@@ -178,7 +180,7 @@ int main(int argc, char **argv)
 	}
 
 	if (op == OP_STOR || op == OP_RECV) {
-		if (optind >= 1) {
+		if (optind < argc) {
 			server = argv[optind];
 		} else {
 			print_usage(argv[0]);
@@ -208,5 +210,5 @@ int main(int argc, char **argv)
 			return 1;
 	}
 
-	return 0;
+	return ret_val;
 }

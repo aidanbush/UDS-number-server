@@ -12,17 +12,17 @@ typedef enum {
 
 typedef struct packet {
 	pkt_type type;
-	uint64_t num;
+	int64_t num;
 } packet_s;
 
 void free_pkt(packet_s *pkt);
 
 /* SEND FUNCTIONS */
-int send_stor_pkt(int sfd, uint64_t num);
+int send_stor_pkt(int sfd, int64_t num);
 
 int send_rtrv_pkt(int sfd);
 
-int send_num_pkt(int sfd, uint64_t num);
+int send_num_pkt(int sfd, int64_t num);
 
 int send_ok_pkt(int sfd);
 

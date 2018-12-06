@@ -1,6 +1,8 @@
 #include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
 
 #include "buf.h"
 
@@ -21,7 +23,7 @@ void free_buf(buf_s *buf)
 	free(buf);
 }
 
-int add_buf(buf_s *buf, uint64_t num)
+int add_buf(buf_s *buf, int64_t num)
 {
 	int ret_val = 0;
 	// lock
@@ -44,7 +46,7 @@ add_buf_return:
 }
 
 // sets num to the number retrived
-int retrieve_buf(buf_s *buf, uint64_t *num)
+int retrieve_buf(buf_s *buf, int64_t *num)
 {
 	int ret_val = 0;
 	// lock
@@ -64,4 +66,53 @@ retrieve_buf_return:
 	// unlock
 	pthread_mutex_unlock(&(buf->mutex));
 	return ret_val;
+}
+
+static int align_buffer(buf_s *buf)
+{
+	// make sure lock is locked before proceeding
+	if (pthread_mutex_trylock(&(buf->mutex)) != EBUSY) {
+		pthread_mutex_unlock(&(buf->mutex));
+		return 0;
+	}
+
+	int64_t tmp_buf[BUF_LEN];
+
+	// copy buf to tmp_buf
+	for (int i = 0; i < buf->size && i < BUF_LEN; i++)
+		tmp_buf[i] = buf->buf[(buf->start + i) % BUF_LEN];
+
+	// copy buf back aligning it
+	for (int i = 0; i < buf->size && i < BUF_LEN; i++)
+		buf->buf[i] = tmp_buf[i];
+
+	buf->start = 0;
+	return 1;
+}
+
+static int cmp_ints(const void * a, const void * b)
+{
+	return *(int64_t *) a - *(int64_t *)b;
+}
+
+int print_buf(buf_s *buf)
+{
+	// lock
+	pthread_mutex_lock(&(buf->mutex));
+
+	// align buffer
+	if (!align_buffer(buf))
+		return 0;
+
+	// sort
+	qsort(buf->buf, buf->size, sizeof(int64_t), cmp_ints);
+
+	// print buffer
+	for (int i = 0; i < buf->size && i < BUF_LEN; i++)
+		printf("%ld\n", buf->buf[i]);
+
+	// unlock
+	pthread_mutex_unlock(&(buf->mutex));
+
+	return 1;
 }

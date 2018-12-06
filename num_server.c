@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "msg.h"
 #include "buf.h"
@@ -16,16 +17,68 @@
 
 buf_s *buf;
 
+volatile sig_atomic_t exit_server;
+
+// sigint handler, sets server to exit
+void sigint_handler(int par)
+{
+	exit_server = 1;
+}
+
+void sighup_handler(int par)
+{
+	printf("print buf\n");
+	print_buf(buf);
+}
+
+int create_sigint_handler()
+{
+	int err;
+	struct sigaction sa = {
+		.sa_handler = &sigint_handler,
+	};
+
+	sigemptyset(&sa.sa_mask);
+
+	err = sigaction(SIGINT, &sa, NULL);
+	if (err == -1)
+		perror("sigaction");
+
+	return err != -1;
+}
+
+int create_sighup_handler()
+{
+	int err;
+	struct sigaction sa = {
+		.sa_handler = sighup_handler,
+	};
+
+	sigemptyset(&sa.sa_mask);
+
+	err = sigaction(SIGHUP, &sa, NULL);
+	if (err == -1)
+		perror("sigaction");
+
+	return err != -1;
+}
+
+// create the new sigint handler
+int create_signal_handlers()
+{
+	if (!create_sigint_handler())
+		return 0;
+
+	return create_sighup_handler();
+}
+
 int stor_num(int sfd, packet_s *pkt)
 {
-	printf("STOR %ld\n", pkt->num);
 	if (add_buf(buf, pkt->num)) {
-		printf("OK\n");
 		if (!send_ok_pkt(sfd)) {
 			fprintf(stderr, "error in send OK\n");
 		}
 	} else {
-		printf("ERR\n");
 		if (!send_err_pkt(sfd)) {
 			fprintf(stderr, "error in send ERR\n");
 		}
@@ -35,14 +88,11 @@ int stor_num(int sfd, packet_s *pkt)
 
 int rtrv_num(int sfd, packet_s *pkt)
 {
-	printf("RTRV\n");
 	if (retrieve_buf(buf, &(pkt->num))) {
-		printf("num: %ld\n", pkt->num);
 		if (!send_num_pkt(sfd, pkt->num)) {
 			fprintf(stderr, "error in send ERR\n");
 		}
 	} else {
-		printf("ERR\n");
 		if (!send_err_pkt(sfd)) {
 			fprintf(stderr, "error in send ERR\n");
 		}
@@ -55,7 +105,6 @@ void *handle_req(void *fd)
 	int cfd = *((int *)(fd));
 	packet_s *pkt;
 
-	printf("handle req\n");
 	// read req
 	pkt = read_pkt(cfd);
 	if (pkt == NULL) {
@@ -139,25 +188,36 @@ int server(char *sock_name)
 	}
 
 	// loop on accept
-	while ((cfd = accept(sfd, (struct sockaddr *)&sock, &slen)) != -1) {
-		printf("accept\n");
+	while (!exit_server) {
+		cfd = accept(sfd, (struct sockaddr *)&sock, &slen);
+		if (cfd == -1) {
+			if (errno != EINTR) {
+				exit_server = 1;
+				perror("accept");
+			}
+			continue;
+		}
+
 		create_req_thread(cfd);
 	}
 
-	perror("accept");
 	close(sfd);
-	return 1;
+	return 0;
 }
 
 int main()
 {
-	// init memory
+	// setup signal handlers
+	if (!create_signal_handlers())
+		return 1;
+
+	// init buffer
 	buf = init_buf();
 
-	server("test");
+	server("socket");
 
 	free_buf(buf);
 	buf = NULL;
 
-	return 1;
+	return 0;
 }
