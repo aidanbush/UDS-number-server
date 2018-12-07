@@ -9,9 +9,9 @@
 buf_s *init_buf()
 {
 	buf_s *buf = calloc(1, sizeof(buf_s));
-	if (buf == NULL) {
+
+	if (buf == NULL)
 		return NULL;
-	}
 
 	buf->mutex = (pthread_mutex_t)PTHREAD_MUTEX_INITIALIZER;
 
@@ -26,6 +26,8 @@ void free_buf(buf_s *buf)
 int add_buf(buf_s *buf, int64_t num)
 {
 	int ret_val = 0;
+	int pos;
+
 	// lock
 	pthread_mutex_lock(&(buf->mutex));
 	if (buf->size == BUF_LEN) {
@@ -33,7 +35,8 @@ int add_buf(buf_s *buf, int64_t num)
 		goto add_buf_return;
 	}
 	// add
-	int pos = (buf->start + buf->size) % BUF_LEN;
+	pos = (buf->start + buf->size) % BUF_LEN;
+
 	buf->buf[pos] = num;
 	buf->size++;
 
@@ -90,7 +93,7 @@ static int align_buffer(buf_s *buf)
 	return 1;
 }
 
-static int cmp_ints(const void * a, const void * b)
+static int cmp_ints(const void *a, const void *b)
 {
 	return *(int64_t *) a - *(int64_t *)b;
 }

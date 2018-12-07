@@ -31,7 +31,7 @@ void sighup_handler(int par)
 	print_buffer = 1;
 }
 
-int create_sigint_handler()
+int create_sigint_handler(void)
 {
 	int err;
 	struct sigaction sa = {
@@ -47,7 +47,7 @@ int create_sigint_handler()
 	return err != -1;
 }
 
-int create_sighup_handler()
+int create_sighup_handler(void)
 {
 	int err;
 	struct sigaction sa = {
@@ -64,7 +64,7 @@ int create_sighup_handler()
 }
 
 // create the new sigint handler
-int create_signal_handlers()
+int create_signal_handlers(void)
 {
 	if (!create_sigint_handler())
 		return 0;
@@ -74,29 +74,23 @@ int create_signal_handlers()
 
 int stor_num(int sfd, packet_s *pkt)
 {
-	if (add_buf(buf, pkt->num)) {
-		if (!send_ok_pkt(sfd)) {
+	if (add_buf(buf, pkt->num))
+		if (!send_ok_pkt(sfd))
 			fprintf(stderr, "error in send OK\n");
-		}
-	} else {
-		if (!send_err_pkt(sfd)) {
+	else
+		if (!send_err_pkt(sfd))
 			fprintf(stderr, "error in send ERR\n");
-		}
-	}
 	return 1;
 }
 
 int rtrv_num(int sfd, packet_s *pkt)
 {
-	if (retrieve_buf(buf, &(pkt->num))) {
-		if (!send_num_pkt(sfd, pkt->num)) {
+	if (retrieve_buf(buf, &(pkt->num)))
+		if (!send_num_pkt(sfd, pkt->num))
 			fprintf(stderr, "error in send ERR\n");
-		}
-	} else {
-		if (!send_err_pkt(sfd)) {
+	else
+		if (!send_err_pkt(sfd))
 			fprintf(stderr, "error in send ERR\n");
-		}
-	}
 	return 1;
 }
 
@@ -113,15 +107,15 @@ void *handle_req(void *fd)
 	}
 
 	switch (pkt->type) {
-		case PKT_OP_STOR:
-			stor_num(cfd, pkt);
-			break;
-		case PKT_OP_RTRV:
-			rtrv_num(cfd, pkt);
-			break;
-		default:
-			//TODO handle error
-			break;
+	case PKT_OP_STOR:
+		stor_num(cfd, pkt);
+		break;
+	case PKT_OP_RTRV:
+		rtrv_num(cfd, pkt);
+		break;
+	default:
+		fprintf(stderr, "Recieved non-valid request\n");
+		break;
 	}
 
 	free_pkt(pkt);
@@ -132,8 +126,11 @@ handle_req_return:
 	return NULL;
 }
 
-int create_req_thread(int cfd) {
+int create_req_thread(int cfd)
+{
+	pthread_t p;
 	int *cfd_ptr = malloc(sizeof(int));
+
 	if (cfd_ptr == NULL) {
 		perror("malloc");
 		return 0;
@@ -141,7 +138,6 @@ int create_req_thread(int cfd) {
 
 	*cfd_ptr = cfd;
 
-	pthread_t p;
 	if (pthread_create(&p, NULL, handle_req, (void *)cfd_ptr) != 0) {
 		perror("pthread_create");
 		return 0;
@@ -151,7 +147,7 @@ int create_req_thread(int cfd) {
 	return 1;
 }
 
-void check_print_buffer()
+void check_print_buffer(void)
 {
 	if (print_buffer) {
 		print_buffer = 0;
@@ -167,9 +163,8 @@ int server(char *sock_name)
 
 	slen = sizeof(sock);
 
-	if (strlen(sock_name) >= sizeof(sock.sun_path)) {
+	if (strlen(sock_name) >= sizeof(sock.sun_path))
 		return -1;
-	}
 
 	sfd = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sfd == -1) {
@@ -216,7 +211,7 @@ int server(char *sock_name)
 	return 0;
 }
 
-int main()
+int main(void)
 {
 	// setup signal handlers
 	if (!create_signal_handlers())

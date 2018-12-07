@@ -43,7 +43,7 @@ int create_sock(int *sfd, struct sockaddr_un *sock, char *server_name)
 
 	strcpy(sock->sun_path, server_name);
 
-	if (connect(*sfd, (struct sockaddr*)sock, sizeof(*sock)) == -1) {
+	if (connect(*sfd, (struct sockaddr *)sock, sizeof(*sock)) == -1) {
 		perror("connect");
 		return 0;
 	}
@@ -189,25 +189,24 @@ int main(int argc, char **argv)
 	}
 
 	switch (op) {
-		case OP_STOR:
-			send_num(server, num);
-			break;
-		case OP_RECV:
-			if (recv_num(server, &num)) {
-				ret_val = num;
-			}
-			break;
-		case OP_NONE:
-			printf("You must select one command\n");
-			print_usage(argv[0]);
-			return 1;
-		case OP_ERR:
-			printf("Only one command allowed\n");
-			// want fallthrough
-			__attribute__ ((fallthrough));
-		default:
-			print_usage(argv[0]);
-			return 1;
+	case OP_STOR:
+		send_num(server, num);
+		break;
+	case OP_RECV:
+		if (recv_num(server, &num))
+			ret_val = num;
+		break;
+	case OP_NONE:
+		printf("You must select one command\n");
+		print_usage(argv[0]);
+		return 1;
+	case OP_ERR:
+		printf("Only one command allowed\n");
+		// want fallthrough
+		__attribute__ ((fallthrough));
+	default:
+		print_usage(argv[0]);
+		return 1;
 	}
 
 	return ret_val;

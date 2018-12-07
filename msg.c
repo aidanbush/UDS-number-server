@@ -31,6 +31,7 @@
 static packet_s *init_pkt(pkt_type type, int64_t num)
 {
 	packet_s *pkt = malloc(sizeof(packet_s));
+
 	if (pkt == NULL)
 		return NULL;
 
@@ -65,6 +66,7 @@ int send_stor_pkt(int sfd, int64_t num)
 int send_rtrv_pkt(int sfd)
 {
 	char msg[RTRV_PKT_LEN + 1] = {0};
+
 	strcpy(msg, RTRV_PKT_STR);
 
 	// send packet
@@ -89,6 +91,7 @@ int send_num_pkt(int sfd, int64_t num)
 int send_ok_pkt(int sfd)
 {
 	char msg[OK_PKT_LEN + 1] = {0};
+
 	strcpy(msg, OK_PKT_STR);
 
 	// send packet
@@ -101,6 +104,7 @@ int send_ok_pkt(int sfd)
 int send_err_pkt(int sfd)
 {
 	char msg[ERR_PKT_LEN + 1] = {0};
+
 	strcpy(msg, ERR_PKT_STR);
 
 	// send packet
@@ -137,13 +141,12 @@ static packet_s *handle_ok_pkt(char *buf, int len)
 
 static packet_s *handle_stor_pkt(char *buf, int len)
 {
-	if (len != STOR_PKT_LEN) {
+	if (len != STOR_PKT_LEN)
 		return NULL;
-	}
 
-	if (strncmp(buf, STOR_PKT_STR, STOR_PKT_STR_LEN - 1) == 0) {
-		return init_pkt(PKT_OP_STOR, *((int64_t*)(buf + STOR_PKT_NUM_START)));
-	}
+	if (strncmp(buf, STOR_PKT_STR, STOR_PKT_STR_LEN - 1) == 0)
+		return init_pkt(PKT_OP_STOR,
+				*((int64_t *)(buf + STOR_PKT_NUM_START)));
 
 	return NULL;
 }
@@ -153,7 +156,7 @@ static packet_s *handle_rnum_pkt(char *buf, int len)
 	if (len != RNUM_PKT_LEN)
 		return NULL;
 
-	return init_pkt(PKT_OP_RNUM, *((int64_t*)(buf)));
+	return init_pkt(PKT_OP_RNUM, *((int64_t *)(buf)));
 }
 
 static packet_s *handle_err_pkt(char *buf, int len)
@@ -182,24 +185,24 @@ packet_s *read_pkt(int sfd)
 	rd = read(sfd, buf, len);
 
 	switch (rd) {
-		case RTRV_PKT_LEN:
-			pkt = handle_rtrv_pkt(buf, rd);
-			break;
-		case OK_PKT_LEN:
-			pkt = handle_ok_pkt(buf, rd);
-			break;
-		case STOR_PKT_LEN:
-			pkt = handle_stor_pkt(buf, rd);
-			break;
-		case RNUM_PKT_LEN:
-			pkt = handle_rnum_pkt(buf, rd);
-			break;
-		case ERR_PKT_LEN:
-			pkt = handle_err_pkt(buf, rd);
-			break;
-		default:
-			pkt = internal_err_pkt();
-			break;
+	case RTRV_PKT_LEN:
+		pkt = handle_rtrv_pkt(buf, rd);
+		break;
+	case OK_PKT_LEN:
+		pkt = handle_ok_pkt(buf, rd);
+		break;
+	case STOR_PKT_LEN:
+		pkt = handle_stor_pkt(buf, rd);
+		break;
+	case RNUM_PKT_LEN:
+		pkt = handle_rnum_pkt(buf, rd);
+		break;
+	case ERR_PKT_LEN:
+		pkt = handle_err_pkt(buf, rd);
+		break;
+	default:
+		pkt = internal_err_pkt();
+		break;
 	}
 
 	return pkt;
