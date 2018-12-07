@@ -17,23 +17,27 @@ All numbers are 64 bit signed numbers, with the endianness determined by the cli
 
 ### Packets
 
-* Store packet: "STOR[num]"
+#### Store packet: "STOR[num]"
 
-  Used to send a number to the server to store.
-  Responded to with an OK, or an ERR packet if there is no space available.
-* Retrieve packet: "RTRV"
+Used to send a number to the server to store.
+Responded to with an OK, or an ERR packet if there is no space available.
 
-  A request to retrieve a number from the server
-* Ok packet: "OK"
+#### Retrieve packet: "RTRV"
 
-  Sent in response to a store request when the number is properly stored.
-* Number response packet: "[num]"
+A request to retrieve a number from the server
 
-  Sent in response to a retrieve request.
-  Contains a single 64 bit singed integer.
-* Error packet: "ERR"
+#### Ok packet: "OK"
 
-  Error packet sent if the buffer is empty and a RTRV request is sent or the buffer is full and a STOR request is made.
+Sent in response to a store request when the number is properly stored.
+
+#### Number response packet: "[num]"
+
+Sent in response to a retrieve request.
+Contains a single 64 bit singed integer.
+
+#### Error packet: "ERR"
+
+Error packet sent if the buffer is empty and a RTRV request is sent or the buffer is full and a STOR request is made.
 
 ### Empty or Full Servers
 
