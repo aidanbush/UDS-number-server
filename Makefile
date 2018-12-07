@@ -4,6 +4,7 @@
 # Date: Nov. 29, 18
 # File: Makefile
 # Description: it's a Makefile
+
 SHELL=/bin/bash
 CC=gcc
 CFLAGS= -Wall -std=c99 -Wextra -g -pedantic -D_POSIX_C_SOURCE=2

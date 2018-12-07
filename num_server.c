@@ -1,3 +1,11 @@
+/* Author: Aidan Bush
+ * Assign: 3
+ * Course: CMPT 360
+ * Date: Nov. 17, 18
+ * File: num_client.c
+ * Description: Client program.
+ */
+
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <errno.h>
@@ -13,10 +21,13 @@
 #include "msg.h"
 #include "buf.h"
 
+// socket accept backlog
 #define BACKLOG	5
 
+// buffer
 buf_s *buf;
 
+// signal flag variables
 volatile sig_atomic_t exit_server;
 volatile sig_atomic_t print_buffer;
 
@@ -26,11 +37,13 @@ void sigint_handler(int par)
 	exit_server = 1;
 }
 
+// sighup handler, sets server to print
 void sighup_handler(int par)
 {
 	print_buffer = 1;
 }
 
+// creats the sigint handler
 int create_sigint_handler(void)
 {
 	int err;
@@ -47,6 +60,7 @@ int create_sigint_handler(void)
 	return err != -1;
 }
 
+// creats the sighup handler
 int create_sighup_handler(void)
 {
 	int err;
@@ -63,7 +77,7 @@ int create_sighup_handler(void)
 	return err != -1;
 }
 
-// create the new sigint handler
+// create the signal handlers
 int create_signal_handlers(void)
 {
 	if (!create_sigint_handler())
@@ -72,6 +86,7 @@ int create_signal_handlers(void)
 	return create_sighup_handler();
 }
 
+// stores the given request to the buffer and sending the appropriate response
 int stor_num(int sfd, packet_s *pkt)
 {
 	if (add_buf(buf, pkt->num)) {
@@ -84,6 +99,7 @@ int stor_num(int sfd, packet_s *pkt)
 	return 1;
 }
 
+// retrieves the number from the buffer and sending the appropriate response
 int rtrv_num(int sfd, packet_s *pkt)
 {
 	if (retrieve_buf(buf, &(pkt->num))) {
@@ -96,6 +112,7 @@ int rtrv_num(int sfd, packet_s *pkt)
 	return 1;
 }
 
+// request handling function
 void *handle_req(void *fd)
 {
 	int cfd = *((int *)(fd));
@@ -128,6 +145,7 @@ handle_req_return:
 	return NULL;
 }
 
+// creates a new handling request thread, and detaches it
 int create_req_thread(int cfd)
 {
 	pthread_t p;
@@ -149,6 +167,7 @@ int create_req_thread(int cfd)
 	return 1;
 }
 
+// checks if the buffer needs to be printed
 void check_print_buffer(void)
 {
 	if (print_buffer) {
@@ -157,6 +176,7 @@ void check_print_buffer(void)
 	}
 }
 
+// main server function, with main server loop
 int server(char *sock_name)
 {
 	int sfd, cfd;
@@ -185,14 +205,13 @@ int server(char *sock_name)
 		return -1;
 	}
 
-	//listen
 	if (listen(sfd, BACKLOG) < 0) {
 		perror("listen");
 		close(sfd);
 		return -1;
 	}
 
-	// loop on accept
+	// loop until signaled to exit
 	while (!exit_server) {
 		cfd = accept(sfd, (struct sockaddr *)&sock, &slen);
 		if (cfd == -1) {
@@ -213,6 +232,7 @@ int server(char *sock_name)
 	return 0;
 }
 
+// main function
 int main(void)
 {
 	// setup signal handlers

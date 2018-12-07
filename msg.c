@@ -1,3 +1,10 @@
+/* Author: Aidan Bush
+ * Assign: Assign 3
+ * Course: CMPT 360
+ * Date: Dec. 2, 18
+ * File: msg.c
+ * Description: Simple message passing library.
+ */
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,29 +12,35 @@
 
 #include "msg.h"
 
+// packet message strings
 #define RTRV_PKT_STR		"RTRV"
 #define OK_PKT_STR		"OK"
 #define STOR_PKT_STR		"STOR"
 #define ERR_PKT_STR		"ERR"
 
-// check if account for null terminator
+// packet message string lengths
 #define RTRV_PKT_STR_LEN	(sizeof(RTRV_PKT_STR))
 #define OK_PKT_STR_LEN		(sizeof(OK_PKT_STR))
 #define STOR_PKT_STR_LEN	(sizeof(STOR_PKT_STR))
 #define ERR_PKT_STR_LEN		(sizeof(ERR_PKT_STR))
 
+// length of a number when sent in a packet
 #define PKT_NUM_LEN		8
 
+// total packet lengths
 #define STOR_PKT_LEN		(STOR_PKT_STR_LEN + PKT_NUM_LEN - 1)
 #define RTRV_PKT_LEN		(RTRV_PKT_STR_LEN - 1)
 #define OK_PKT_LEN		(OK_PKT_STR_LEN - 1)
 #define RNUM_PKT_LEN		(PKT_NUM_LEN - 1)
 #define ERR_PKT_LEN		(ERR_PKT_STR_LEN - 1)
 
+// store packet number starting index
 #define STOR_PKT_NUM_START	(STOR_PKT_STR_LEN - 1)
 
+// maximum valid packet length
 #define MAX_PKT_LEN		(STOR_PKT_LEN)
 
+// initialized a new packet with the given type and num
 static packet_s *init_pkt(pkt_type type, int64_t num)
 {
 	packet_s *pkt = malloc(sizeof(packet_s));
@@ -41,6 +54,7 @@ static packet_s *init_pkt(pkt_type type, int64_t num)
 	return pkt;
 }
 
+// frees the given packet_s struct
 void free_pkt(packet_s *pkt)
 {
 	free(pkt);
@@ -48,7 +62,9 @@ void free_pkt(packet_s *pkt)
 
 /* SEND PACKETS */
 
-// send_store
+// sends a store packet with the given number to the given socket file
+// descriptor
+// returns 1 on success and 0 on failure
 int send_stor_pkt(int sfd, int64_t num)
 {
 	char msg[STOR_PKT_LEN + 1] = {0};
@@ -62,7 +78,8 @@ int send_stor_pkt(int sfd, int64_t num)
 	return 1;
 }
 
-// send_rtrv
+// sends a retrieve packet to the given socket file descriptor
+// returns 1 on success and 0 on failure
 int send_rtrv_pkt(int sfd)
 {
 	char msg[RTRV_PKT_LEN + 1] = {0};
@@ -75,7 +92,8 @@ int send_rtrv_pkt(int sfd)
 	return 1;
 }
 
-// send_num
+// sends a number response packet to the given socket file descriptor
+// returns 1 on success and 0 on failure
 int send_num_pkt(int sfd, int64_t num)
 {
 	char msg[RNUM_PKT_LEN + 1] = {0};
@@ -87,7 +105,8 @@ int send_num_pkt(int sfd, int64_t num)
 	return 1;
 }
 
-// send_ok
+// sends an OK packet to the given socket file descriptor
+// returns 1 on success and 0 on failure
 int send_ok_pkt(int sfd)
 {
 	char msg[OK_PKT_LEN + 1] = {0};
@@ -100,7 +119,8 @@ int send_ok_pkt(int sfd)
 	return 1;
 }
 
-// send err
+// sends a error packet to the given socket file descriptor
+// returns 1 on success and 0 on failure
 int send_err_pkt(int sfd)
 {
 	char msg[ERR_PKT_LEN + 1] = {0};
@@ -115,6 +135,8 @@ int send_err_pkt(int sfd)
 
 /* HANDLE PACKETS */
 
+// creates a packet_s struct for a RTRV request
+// Returns NULL if not a valid request
 static packet_s *handle_rtrv_pkt(char *buf, int len)
 {
 	if (len != RTRV_PKT_LEN)
@@ -128,6 +150,8 @@ static packet_s *handle_rtrv_pkt(char *buf, int len)
 
 }
 
+// creates a packet_s struct for a OK request
+// Returns NULL if not a valid request
 static packet_s *handle_ok_pkt(char *buf, int len)
 {
 	if (len != OK_PKT_LEN)
@@ -139,6 +163,8 @@ static packet_s *handle_ok_pkt(char *buf, int len)
 	return NULL;
 }
 
+// creates a packet_s struct for a STOR request
+// Returns NULL if not a valid request
 static packet_s *handle_stor_pkt(char *buf, int len)
 {
 	if (len != STOR_PKT_LEN)
@@ -151,6 +177,8 @@ static packet_s *handle_stor_pkt(char *buf, int len)
 	return NULL;
 }
 
+// creates a packet_s struct for a RNUM request
+// Returns NULL if not a valid request
 static packet_s *handle_rnum_pkt(char *buf, int len)
 {
 	if (len != RNUM_PKT_LEN)
@@ -159,6 +187,8 @@ static packet_s *handle_rnum_pkt(char *buf, int len)
 	return init_pkt(PKT_OP_RNUM, *((int64_t *)(buf)));
 }
 
+// creates a packet_s struct for a ERR request
+// Returns NULL if not a valid request
 static packet_s *handle_err_pkt(char *buf, int len)
 {
 	if (len != ERR_PKT_LEN)
@@ -170,11 +200,15 @@ static packet_s *handle_err_pkt(char *buf, int len)
 	return NULL;
 }
 
+// creates a packet_s struct for an internal error
 static packet_s *internal_err_pkt()
 {
 	return init_pkt(PKT_TYPE_INTER_ERR, 0);
 }
 
+/* READ FUNCTIONS */
+
+// reads from a given socket file descriptor and return a packet_s struct
 packet_s *read_pkt(int sfd)
 {
 	int rd;

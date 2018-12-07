@@ -1,3 +1,11 @@
+/* Author: Aidan Bush
+ * Assign: Assign 3
+ * Course: CMPT 360
+ * Date: Dec. 3, 18
+ * File: buf.c
+ * Description: thread safe ring buffer library, that uses a statically sized
+ *	buffer.
+ */
 #include <pthread.h>
 #include <stdint.h>
 #include <stdlib.h>
@@ -6,6 +14,8 @@
 
 #include "buf.h"
 
+// initializes and returns a newly allocated buf_s struct
+// Returns NULL on failure
 buf_s *init_buf()
 {
 	buf_s *buf = calloc(1, sizeof(buf_s));
@@ -18,23 +28,27 @@ buf_s *init_buf()
 	return buf;
 }
 
+// frees the given buf_s struct
 void free_buf(buf_s *buf)
 {
 	free(buf);
 }
 
+// Retrives a single value from the gven buf_s and stores it in num
+// Also locks the buf_s when preforming this task
+// Returns 1 on success and 0 on failure
 int add_buf(buf_s *buf, int64_t num)
 {
 	int ret_val = 0;
 	int pos;
 
-	// lock
 	pthread_mutex_lock(&(buf->mutex));
+
 	if (buf->size == BUF_LEN) {
 		ret_val = 0;
 		goto add_buf_return;
 	}
-	// add
+
 	pos = (buf->start + buf->size) % BUF_LEN;
 
 	buf->buf[pos] = num;
@@ -43,17 +57,20 @@ int add_buf(buf_s *buf, int64_t num)
 	ret_val = 1;
 
 add_buf_return:
-	// unlock
 	pthread_mutex_unlock(&(buf->mutex));
+
 	return ret_val;
 }
 
-// sets num to the number retrived
+// Retrives a single value from the gven buf_s and stores it in num
+// Also locks the buf_s when preforming this task
+// Returns 1 on success and 0 on failure
 int retrieve_buf(buf_s *buf, int64_t *num)
 {
 	int ret_val = 0;
-	// lock
+
 	pthread_mutex_lock(&(buf->mutex));
+
 	if (buf->size == 0) {
 		ret_val = 0;
 		goto retrieve_buf_return;
@@ -66,11 +83,13 @@ int retrieve_buf(buf_s *buf, int64_t *num)
 	ret_val = 1;
 
 retrieve_buf_return:
-	// unlock
 	pthread_mutex_unlock(&(buf->mutex));
+
 	return ret_val;
 }
 
+// Aligns the buffer to start a index 0, does not attempt to keep order nor sort
+// requires the buffer to already be locked
 static int align_buffer(buf_s *buf)
 {
 	// make sure lock is locked before proceeding
@@ -93,14 +112,17 @@ static int align_buffer(buf_s *buf)
 	return 1;
 }
 
+// compares two int64_t values for use in qsort
 static int cmp_ints(const void *a, const void *b)
 {
 	return *(int64_t *) a - *(int64_t *)b;
 }
 
+// prints the buffer to stdout, with one number per line
+// Also locks the buf_s when preforming this task
+// Returns 1 on success and 0 on failure
 int print_buf(buf_s *buf)
 {
-	// lock
 	pthread_mutex_lock(&(buf->mutex));
 
 	// align buffer
@@ -114,7 +136,6 @@ int print_buf(buf_s *buf)
 	for (int i = 0; i < buf->size && i < BUF_LEN; i++)
 		printf("%ld\n", buf->buf[i]);
 
-	// unlock
 	pthread_mutex_unlock(&(buf->mutex));
 
 	return 1;

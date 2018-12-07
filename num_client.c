@@ -6,7 +6,6 @@
  * Description: Client program.
  */
 
-/* standard libraries */
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <libgen.h>
@@ -20,6 +19,7 @@
 
 int verbose;
 
+// emum for getopt parsing
 typedef enum {
 	OP_NONE = 0,
 	OP_ERR,
@@ -27,6 +27,8 @@ typedef enum {
 	OP_RECV,
 } operation;
 
+// creates a new socked for the given server string
+// returns 1 on success and 0 on failure
 int create_sock(int *sfd, struct sockaddr_un *sock, char *server_name)
 {
 	if (strlen(server_name) >= sizeof(sock->sun_path)) {
@@ -51,6 +53,8 @@ int create_sock(int *sfd, struct sockaddr_un *sock, char *server_name)
 	return 1;
 }
 
+// sends the given 64 bit number to the given server
+// returns 1 on success and 0 on failure
 int send_num(char *server, int64_t num)
 {
 	int sfd;
@@ -92,6 +96,8 @@ send_num_return:
 	return ret_val;
 }
 
+// recieves a 64 bit number from the given server
+// returns 1 on success and 0 on failure
 int recv_num(char *server, int64_t *num)
 {
 	int sfd;
@@ -132,6 +138,7 @@ recv_num_return:
 	return ret_val;
 }
 
+// prints the usage message
 void print_usage(char *p_name)
 {
 	printf("Usage: %s [options] server\n"
@@ -143,6 +150,7 @@ void print_usage(char *p_name)
 		"    -v enable verbose output\n", basename(p_name));
 }
 
+// main function
 int main(int argc, char **argv)
 {
 	int c;
