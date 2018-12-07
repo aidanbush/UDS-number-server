@@ -34,7 +34,11 @@ All numbers are 64 bit signed numbers, with the endianness determined by the cli
 
 To account for empty or full servers, and error packet is sent, this lets the client know that the request it made was not completed.
 
-## Test
+## Building and Testing
+
+Requires GNU make, or a compatible equivalent.
+* To build run `make all`
+* To test run `make test`
 
 num_server
 ==========
