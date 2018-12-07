@@ -25,5 +25,8 @@ msg.o: msg.c msg.h
 
 buf.o: buf.c buf.h
 
+test: num_server num_client
+	./test.sh
+
 clean:
 	$(RM) num_server num_client *.o

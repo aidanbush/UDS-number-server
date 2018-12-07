@@ -74,23 +74,25 @@ int create_signal_handlers(void)
 
 int stor_num(int sfd, packet_s *pkt)
 {
-	if (add_buf(buf, pkt->num))
+	if (add_buf(buf, pkt->num)) {
 		if (!send_ok_pkt(sfd))
 			fprintf(stderr, "error in send OK\n");
-	else
+	} else {
 		if (!send_err_pkt(sfd))
 			fprintf(stderr, "error in send ERR\n");
+	}
 	return 1;
 }
 
 int rtrv_num(int sfd, packet_s *pkt)
 {
-	if (retrieve_buf(buf, &(pkt->num)))
+	if (retrieve_buf(buf, &(pkt->num))) {
 		if (!send_num_pkt(sfd, pkt->num))
-			fprintf(stderr, "error in send ERR\n");
-	else
+			fprintf(stderr, "error in send NUM packet\n");
+	} else {
 		if (!send_err_pkt(sfd))
 			fprintf(stderr, "error in send ERR\n");
+	}
 	return 1;
 }
 
@@ -114,7 +116,7 @@ void *handle_req(void *fd)
 		rtrv_num(cfd, pkt);
 		break;
 	default:
-		fprintf(stderr, "Recieved non-valid request\n");
+		fprintf(stderr, "Recieved non-valid request, ignoring\n");
 		break;
 	}
 

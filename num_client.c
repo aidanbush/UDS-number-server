@@ -134,11 +134,11 @@ recv_num_return:
 
 void print_usage(char *p_name)
 {
-	printf("Usage: %s [options] [num] server\n"
+	printf("Usage: %s [options] server\n"
 		"Client for sending and recieving numbers from the numbers server.\n\n"
 		"Options:\n"
 		"    -h display usage message\n"
-		"    -s send number\n"
+		"    -s send number, must be followed by a 64 bit number\n"
 		"    -r receive number\n"
 		"    -v enable verbose output\n", basename(p_name));
 }
