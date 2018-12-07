@@ -18,16 +18,21 @@ All numbers are 64 bit signed numbers, with the endianness determined by the cli
 ### Packets
 
 * Store packet: "STOR[num]"
+
   Used to send a number to the server to store.
   Responded to with an OK, or an ERR packet if there is no space available.
 * Retrieve packet: "RTRV"
+
   A request to retrieve a number from the server
 * Ok packet: "OK"
+
   Sent in response to a store request when the number is properly stored.
 * Number response packet: "[num]"
+
   Sent in response to a retrieve request.
   Contains a single 64 bit singed integer.
 * Error packet: "ERR"
+
   Error packet sent if the buffer is empty and a RTRV request is sent or the buffer is full and a STOR request is made.
 
 ### Empty or Full Servers
@@ -44,6 +49,9 @@ num_server
 ==========
 
 num_server is a simple UDS server that stores numbers in a ring buffer.
+
+Usage: `num_server`
+
 The buffer is defined by the `BUF_LEN` macro in the `buf.h` file, it has a default value of 64, but can be redefined.
 
 The server uses the socket, "socket", which is created in the directory it is ran in.
@@ -57,6 +65,7 @@ num_client
 ==========
 
 num_client is a simple UDS client that can send store and receive requests to a server.
+
 Usage: `num_client [operation] [options] socket`
 The client must be given an operation to preform, these are either a store or retrieve.
 In a store request a `-s` flag is used followed by the 64 bit number to be sent.
