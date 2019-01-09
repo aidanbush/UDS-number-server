@@ -31,7 +31,7 @@
 #define STOR_PKT_LEN		(STOR_PKT_STR_LEN + PKT_NUM_LEN - 1)
 #define RTRV_PKT_LEN		(RTRV_PKT_STR_LEN - 1)
 #define OK_PKT_LEN		(OK_PKT_STR_LEN - 1)
-#define RNUM_PKT_LEN		(PKT_NUM_LEN - 1)
+#define RNUM_PKT_LEN		(PKT_NUM_LEN)
 #define ERR_PKT_LEN		(ERR_PKT_STR_LEN - 1)
 
 // store packet number starting index
